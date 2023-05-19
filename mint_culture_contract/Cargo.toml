@@ -1,0 +1,20 @@
+[package]
+name = "mint_culture_contract"
+version = "0.1.0"
+authors = ["psychehose@gmail.com"]
+edition = "2023"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "4.0.0"
+
+[profile.release]
+codegen-units=1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true
+
