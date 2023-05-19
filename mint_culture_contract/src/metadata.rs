@@ -67,6 +67,8 @@ pub struct Token {
     // 모든 메타데이터에 빠르게 접근 가능
     // tokenMetaById 자료형으로 저장됨.
     pub owner_id: AccountId,
+    pub approved_account_ids: HashMap<AccountId, u64>,
+    pub next_approval_id: u64,
 }
 
 //The Json token is what will be returned from view calls.
@@ -80,6 +82,8 @@ pub struct JsonToken {
     pub owner_id: AccountId,
 
     pub metadata: TokenMetadata,
+
+    pub approved_account_ids: HashMap<AccountId, u64>,
 }
 
 pub trait NonFungibleTokenMetadata {

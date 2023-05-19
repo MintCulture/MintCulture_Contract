@@ -3,13 +3,47 @@ use near_sdk:: {CryptoHash};
 use std::mem::size_of;
 use near_sdk::Promise;
 
-// 스토리지 컬렉션에서 고유한 접두사를 생성하는 데 사용됩니다(데이터 충돌을 방지하기 위한 것임)
 
+//calculate how many bytes the account ID is taking up
+pub(crate) fn bytes_for_approved_account_id(account_id: &AccountId) -> u64 {
+    // The extra 4 bytes are coming from Borsh serialization to store the length of the string.
+    account_id.as_str().len() as u64 + 4 + size_of::<u64>() as u64
+}
+pub(crate) fn refund_approved_account_ids_iter<'a, I>(
+    account_id: AccountId,
+    approved_account_ids: I, //the approved account IDs must be passed in as an iterator
+) -> Promise
+    where
+        I: Iterator<Item = &'a AccountId>,
+{
+    //get the storage total by going through and summing all the bytes for each approved account IDs
+    let storage_released: u64 = approved_account_ids.map(bytes_for_approved_account_id).sum();
+    //transfer the account the storage that is released
+    Promise::new(account_id).transfer(Balance::from(storage_released) * env::storage_byte_cost())
+}
+
+//refund a map of approved account IDs and send the funds to the passed in account ID
+pub(crate) fn refund_approved_account_ids(
+    account_id: AccountId,
+    approved_account_ids: &HashMap<AccountId, u64>,
+) -> Promise {
+    //call the refund_approved_account_ids_iter with the approved account IDs as keys
+    refund_approved_account_ids_iter(account_id, approved_account_ids.keys())
+}
+
+// 스토리지 컬렉션에서 고유한 접두사를 생성하는 데 사용됩니다(데이터 충돌을 방지하기 위한 것임)
 pub(crate) fn hash_account_id(account_id: &AccountId) -> CryptoHash {
     let mut hash = CryptoHash::default();
 
     hash.copy_from_slice(&env::sha256(account_id.as_bytes()));
     hash
+}
+
+pub(crate) fn assert_at_least_one_yocto() {
+    assert!(
+        env::attached_deposit() >= 1,
+        "Requires attached deposit of at least 1 yoctoNEAR",
+    )
 }
 
 pub(crate) fn assert_one_yocto() {
@@ -76,12 +110,31 @@ impl Contract {
         sender_id: &AccountId,
         receiver_id: &AccountId,
         token_id: &TokenId,
+        approval_id: Option<u64>,
         memo: Option<String>
     ) -> Token {
         let token = self.tokens_by_id.get(token_id).expect("No Exist Token");
 
         if sender_id != &token.owner_id {
-            env::panic_str("Unauthorized");
+
+            if !token.approved_account_ids.contains_key(sender_id) {
+                env::panic_str("Unauthorized");
+            }
+            if let Some(enforced_approval_id) = approval_id {
+                //get the actual approval ID
+                let actual_approval_id = token
+                    .approved_account_ids
+                    .get(sender_id)
+                    //if the sender isn't in the map, we panic
+                    .expect("Sender is not approved account");
+
+                //make sure that the actual approval ID is the same as the one provided
+                assert_eq!(
+                    actual_approval_id, &enforced_approval_id,
+                    "The actual approval_id {} is different from the given approval_id {}",
+                    actual_approval_id, enforced_approval_id,
+                );
+            }
         }
 
         assert_ne!(
@@ -96,6 +149,8 @@ impl Contract {
 
         let new_token = Token {
             owner_id: receiver_id.clone(),
+            approved_account_ids: Default::default(),
+            next_approval_id: token.next_approval_id,
         };
 
         self.tokens_by_id.insert(token_id, &new_token);

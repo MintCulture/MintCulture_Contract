@@ -1,5 +1,6 @@
 use crate::*;
 use near_sdk::{assert_one_yocto, ext_contract, Gas, log, PromiseResult};
+use crate::internal::refund_approved_account_ids;
 
 const GAS_FOR_RESOLVE_TRANSFER: Gas = Gas(10_000_000_000_000);
 const GAS_FOR_NFT_ON_TRANSFER: Gas = Gas(25_000_000_000_000);
@@ -10,6 +11,7 @@ pub trait NonFungibleTokenCore {
         &mut self,
         receiver_id: AccountId,
         token_id: TokenId,
+        approval_id: Option<u64>,
         memo: Option<String>
     );
 
@@ -19,6 +21,7 @@ pub trait NonFungibleTokenCore {
         &mut self,
         receiver_id: AccountId,
         token_id: TokenId,
+        approval_id: Option<u64>,
         memo: Option<String>,
         msg: String,
     ) -> PromiseOrValue<bool>;
@@ -52,6 +55,7 @@ trait NonFungibleTokenResolver {
         owner_id: AccountId,
         receiver_id: AccountId,
         token_id: TokenId,
+        approved_account_ids: HashMap<AccountId, u64>,
     ) -> bool;
 }
 
@@ -63,6 +67,7 @@ impl NonFungibleTokenCore for Contract {
         &mut self,
         receiver_id: AccountId,
         token_id: TokenId,
+        approval_id: Option<u64>,
         memo: Option<String>
     ) {
         // Transaction 서명을 위해 (보안)
@@ -71,11 +76,18 @@ impl NonFungibleTokenCore for Contract {
         let sender_id = env::predecessor_account_id();
 
         // 내부 함수 call - 구현함수
-        self.internal_transfer(
+        let previous_token = self.internal_transfer(
             &sender_id,
             &receiver_id,
             &token_id,
-            memo
+            approval_id,
+            memo,
+        );
+
+        //we refund the owner for releasing the storage used up by the approved account IDs
+        refund_approved_account_ids(
+            previous_token.owner_id.clone(),
+            &previous_token.approved_account_ids,
         );
     }
 
@@ -85,6 +97,7 @@ impl NonFungibleTokenCore for Contract {
         &mut self,
         receiver_id: AccountId,
         token_id: TokenId,
+        approval_id: Option<u64>,
         memo: Option<String>,
         msg: String,
     ) -> PromiseOrValue<bool> {
@@ -95,6 +108,7 @@ impl NonFungibleTokenCore for Contract {
             &sender_id,
             &receiver_id,
             &token_id,
+            approval_id,
             memo,
         );
         // Question: - 콜백을 받기 위함?
@@ -113,6 +127,7 @@ impl NonFungibleTokenCore for Contract {
                         previous_token.owner_id,
                         receiver_id,
                         token_id,
+                        previous_token.approved_account_ids,
                     )
             ).into()
     }
@@ -130,6 +145,7 @@ impl NonFungibleTokenCore for Contract {
                 token_id,
                 owner_id: token.owner_id,
                 metadata,
+                approved_account_ids: token.approved_account_ids,
             })
         } else {
             None
@@ -149,6 +165,7 @@ impl NonFungibleTokenResolver for Contract {
         owner_id: AccountId,
         receiver_id: AccountId,
         token_id: TokenId,
+        approved_account_ids: HashMap<AccountId, u64>,
     ) -> bool {
         // Whether receiver wants to return token back to the sender, based on `nft_on_transfer`
         // call result.
@@ -161,6 +178,7 @@ impl NonFungibleTokenResolver for Contract {
                         since we've already transferred the token and nft_on_transfer returned false, we don't have to
                         revert the original transfer and thus we can just return true since nothing went wrong.
                     */
+                    refund_approved_account_ids(owner_id, &approved_account_ids);
                     return true;
                 }
             }
@@ -170,11 +188,13 @@ impl NonFungibleTokenResolver for Contract {
         let mut token = if let Some(token) = self.tokens_by_id.get(&token_id) {
             if token.owner_id != receiver_id {
                 // The token is not owner by the receiver anymore. Can't return it.
+                refund_approved_account_ids(owner_id, &approved_account_ids);
                 return true;
             }
             token
             //if there isn't a token object, it was burned and so we return true
         } else {
+            refund_approved_account_ids(owner_id, &approved_account_ids);
             return true;
         };
 
@@ -188,6 +208,11 @@ impl NonFungibleTokenResolver for Contract {
 
         //we change the token struct's owner to be the original owner
         token.owner_id = owner_id;
+
+        refund_approved_account_ids(receiver_id, &token.approved_account_ids);
+        //reset the approved account IDs to what they were before the transfer
+        token.approved_account_ids = approved_account_ids;
+
         //we inset the token back into the tokens_by_id collection
         self.tokens_by_id.insert(&token_id, &token);
 

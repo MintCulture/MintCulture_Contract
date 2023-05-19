@@ -16,6 +16,8 @@ impl Contract {
         // 소유자 ID를 포함하는 토큰 구조체 지정
         let token = Token {
             owner_id: receiver_id.unwrap(),
+            approved_account_ids: Default::default(),
+            next_approval_id: 0,
         };
 
         // 토큰 ID와 토큰 구조체를 삽입하고 토큰이 존재하지 않는지 확인합니다.
