@@ -70,8 +70,8 @@ impl Contract {
             owner_id,
             NFTContractMetadata {
                 spec: "nft-1.0.0".to_string(),
-                name: "NFT Tutorial Contract".to_string(),
-                symbol: "GOTEAM".to_string(),
+                name: "Mint Culture NFT Collect".to_string(),
+                symbol: "MintCulture".to_string(),
                 icon: None,
                 base_uri: None,
                 reference: None,
@@ -98,7 +98,9 @@ impl Contract {
                 Some(&metadata)
             ),
         };
-
+        // println!("tokens_per_owner: {}", LookupMap::new(StorageKey::TokensPerOwner.try_to_vec().unwrap()));
+        // println!("tokens_by_id: {}", LookupMap::new(StorageKey::TokensById.try_to_vec().unwrap()));
+        // println!("token_metadata_by_id: {}",UnorderedMap::new(StorageKey::TokenMetadataById.try_to_vec().unwrap()));
         this
     }
 }
