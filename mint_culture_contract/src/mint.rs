@@ -10,9 +10,6 @@ impl Contract {
         metadata: TokenMetadata,
         receiver_id: Option<AccountId>,
     ) {
-        /*
-            FILL THIS IN
-        */
         // 계약에서 사용 중인 초기 저장소를 측정합니다.
         let initial_storage_usage = env::storage_usage();
 
@@ -25,7 +22,7 @@ impl Contract {
         let token_id = &token_id.unwrap()[..];
 
         assert!(
-            self.tokens_by_id.insert(&token_id.to_string(), &token.owner_id.to_string()).is_none(),
+            self.tokens_by_id.insert(&token_id.to_string(), &token).is_none(),
             "Token already exists"
         );
         // 토큰 ID 및 메타데이터 삽입

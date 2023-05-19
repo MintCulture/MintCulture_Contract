@@ -32,7 +32,7 @@ pub struct Contract {
     pub tokens_per_owner: LookupMap<AccountId, UnorderedSet<TokenId>>,
 
     // 토큰 ID에 관한 토큰 구조체를 추적
-    pub  tokens_by_id: LookupMap<TokenId, TokenId>,
+    pub  tokens_by_id: LookupMap<TokenId, Token>,
 
     // 토큰에 ID에 관한 토큰 메타데이터를 추적함
     pub token_metadata_by_id: UnorderedMap<TokenId, TokenMetadata>,
