@@ -3,30 +3,39 @@ use crate::*;
 #[near_bindgen]
 impl Contract {
     //Query for the total supply of NFTs on the contract
+    // 컨트랙트에 저장된 총 NFT 수를 반환해야 합니다.
     pub fn nft_total_supply(&self) -> U128 {
-        /*
-            FILL THIS IN
-        */
-        todo!(); //remove once code is filled in.
+        U128(self.token_metadata_by_id.len() as u128)
     }
 
     //Query for nft tokens on the contract regardless of the owner using pagination
+    // 소유자에 관계 없이 컨트랙트에 저장된 JSONTOKEN 목록을 반환해야함.
     pub fn nft_tokens(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<JsonToken> {
-        /*
-            FILL THIS IN
-        */
-        todo!(); //remove once code is filled in.
+        let start = u128::from(from_index.unwrap_or(U128(0)));
+
+        //iterate through each token using an iterator
+        self.token_metadata_by_id.keys()
+            .skip(start as usize)
+            .take(limit.unwrap_or(50) as usize)
+            .map(|token_id| self.nft_token(token_id.clone()).unwrap())
+            .collect()
     }
 
     //get the total supply of NFTs for a given owner
+    // 소유자가 가지고 있는 NFT 개수
     pub fn nft_supply_for_owner(
         &self,
         account_id: AccountId,
     ) -> U128 {
-        /*
-            FILL THIS IN
-        */
-        todo!(); //remove once code is filled in.
+        let tokens_for_owner_set = self.tokens_per_owner.get(&account_id);
+
+        //if there is some set of tokens, we'll return the length as a U128
+        if let Some(tokens_for_owner_set) = tokens_for_owner_set {
+            U128(tokens_for_owner_set.len() as u128)
+        } else {
+            //if there isn't a set of tokens for the passed in account ID, we'll return 0
+            U128(0)
+        }
     }
 
     //Query for all the tokens for an owner
