@@ -2,7 +2,7 @@
 name = "mint_culture_contract"
 version = "0.1.0"
 authors = ["psychehose@gmail.com"]
-edition = "2023"
+edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
