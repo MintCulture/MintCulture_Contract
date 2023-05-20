@@ -23,42 +23,24 @@ pub struct NFTContractMetadata {
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct TokenMetadata {
-
     // Streamer name
     pub streamer_name: String,
+
     // NFT 이름 -
-    pub title: Option<String>,
+    pub title: String,
+
+    // 일련번호
+    pub serial_number: String,
+
+    // 연결된 미디어의 URL
+    pub media: String,
+    pub media_hash: Option<Base64VecU8>,
 
     // NFT 설명 -
     pub description: Option<String>,
 
-    // 연결된 미디어의 URL
-    pub media: Option<String>,
-
-    // media URL의 해시
-    pub media_hash: Option<Base64VecU8>,
-
-    // NFT 만들 때 존재하는 메타데이터 집합의 복사본 수?
-    pub copies: Option<u64>, // number of copies of this set of metadata in existence when token was minted.
-
-    // 토큰이 발행된 시점
-    pub issued_at: Option<u64>,
-
-    // 토큰 만료되는 시점
-    pub expires_at: Option<u64>,
-
-    pub starts_at: Option<u64>, // When token starts being valid, Unix epoch in milliseconds
-    pub updated_at: Option<u64>, // When token was last updated, Unix epoch in milliseconds
-    // NFT가 온체인에 저장하려는 추가 항목 -  JSON Stringfy 가능
-    pub extra: Option<String>,
-    // 오프체인 JSON 파일의 URL -
-    pub reference: Option<String>,
-    // 오프체인 JSON 파일의 URL 해쉬값
-    pub reference_hash: Option<Base64VecU8>,
-
-    pub total_donation_value: Option<u64>,
-
-    pub subscription_month: Option<u64>,
+    // 토큰 발행 일자
+    pub issued_at: String
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
