@@ -6,22 +6,22 @@ impl Contract {
     #[payable]
     pub fn nft_mint(
         &mut self,
-        token_id: Option<TokenId>,
+        token_id: TokenId,
         metadata: TokenMetadata,
-        receiver_id: Option<AccountId>,
+        receiver_id: AccountId,
     ) {
         // 계약에서 사용 중인 초기 저장소를 측정합니다.
         let initial_storage_usage = env::storage_usage();
 
         // 소유자 ID를 포함하는 토큰 구조체 지정
         let token = Token {
-            owner_id: receiver_id.unwrap(),
+            owner_id: receiver_id,
             approved_account_ids: Default::default(),
             next_approval_id: 0,
         };
 
         // 토큰 ID와 토큰 구조체를 삽입하고 토큰이 존재하지 않는지 확인합니다.
-        let token_id = &token_id.unwrap()[..];
+        let token_id = &token_id[..];
 
         assert!(
             self.tokens_by_id.insert(&token_id.to_string(), &token).is_none(),
