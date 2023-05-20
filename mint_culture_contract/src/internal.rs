@@ -94,6 +94,7 @@ impl Contract {
 
         // 세트에 토큰 ID를 삽입합니다.
         tokens_set.insert(token_id);
+
         // 주어진 account ID에 set를 삽입
         self.tokens_per_owner.insert(account_id, &tokens_set);
     }

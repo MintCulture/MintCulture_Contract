@@ -27,9 +27,8 @@ impl Contract {
             self.tokens_by_id.insert(&token_id.to_string(), &token).is_none(),
             "Token already exists"
         );
+
         // 토큰 ID 및 메타데이터 삽입
-
-
         self.token_metadata_by_id.insert(&token_id.to_string(), &metadata);
 
         // 소유자에게 토큰을 추가하기 위한 내부 메서드를 호출합니다.
