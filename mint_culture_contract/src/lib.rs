@@ -27,21 +27,14 @@ mod internal;
 pub struct Contract {
     // 컨트랙트 소유자
     pub owner_id: AccountId,
-
     // 주어진 계정에 관한 모든 토큰 ID를 keep track 함.
     pub tokens_per_owner: LookupMap<AccountId, UnorderedSet<TokenId>>,
-
     // 토큰 ID에 관한 토큰 구조체를 추적
     pub  tokens_by_id: LookupMap<TokenId, Token>,
-
     // 토큰에 ID에 관한 토큰 메타데이터를 추적함
     pub token_metadata_by_id: UnorderedMap<TokenId, TokenMetadata>,
-
     // 계약에 관한 메타데이터를 추적함
     pub metadata: LazyOption<NFTContractMetadata>,
-
-
-    // 여기에서 Token, TokenMetaData, NFTContractMetadata 자료형은 구현할 것임
 }
 
 /// Helper structure for keys of the persistent collections.
@@ -59,11 +52,6 @@ pub enum StorageKey {
 
 #[near_bindgen]
 impl Contract {
-    /*
-        initialization function (can only be called once).
-        this initializes the contract with default metadata so the
-        user doesn't have to manually type metadata.
-    */
     #[init]
     pub fn new_default_meta(owner_id: AccountId) -> Self {
         Self::new(
@@ -80,11 +68,6 @@ impl Contract {
         )
     }
 
-    /*
-        initialization function (can only be called once).
-        this initializes the contract with metadata that was passed in and
-        the owner_id.
-    */
     #[init]
     pub fn new(owner_id: AccountId, metadata: NFTContractMetadata) -> Self {
 
@@ -98,9 +81,6 @@ impl Contract {
                 Some(&metadata)
             ),
         };
-        // println!("tokens_per_owner: {}", LookupMap::new(StorageKey::TokensPerOwner.try_to_vec().unwrap()));
-        // println!("tokens_by_id: {}", LookupMap::new(StorageKey::TokensById.try_to_vec().unwrap()));
-        // println!("token_metadata_by_id: {}",UnorderedMap::new(StorageKey::TokenMetadataById.try_to_vec().unwrap()));
         this
     }
 }
